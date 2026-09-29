@@ -23,7 +23,7 @@ flowchart LR
 | File cấu hình | `.env.example`, `infra/`, `firmware/platformio.ini` |
 | README hướng dẫn chạy | `README.md` |
 | App ứng dụng | Dashboard Grafana trong `infra/grafana/` |
-| Báo cáo Word 4-6 trang | `docs/Bao_cao_Bai_2_IoT_hoan_chinh.docx` |
+| Báo cáo Word 4-6 trang | Nộp riêng, không lưu trong repository |
 
 Các thư mục `tools/` và `tests/` hỗ trợ tạo dữ liệu demo, kiểm thử lỗi và xác minh chất lượng mã nguồn.
 
@@ -42,7 +42,6 @@ IoT_Lab2_Submission/
 ├── infra/                     # Docker Compose, Mosquitto, InfluxDB, Grafana
 ├── tools/                     # Publisher kiểm thử và bộ sinh dữ liệu demo
 ├── tests/                     # 36 trường hợp kiểm thử tự động
-├── docs/                      # Báo cáo Word
 ├── .env.example               # Mẫu cấu hình, không chứa secret thật
 ├── requirements.txt
 └── README.md
@@ -263,4 +262,3 @@ Lệnh trên giữ nguyên Docker volumes. Chỉ dùng `down --volumes` khi th�
 | InfluxDB Data Explorer không hiện dữ liệu | Chọn đúng bucket, measurement, field và time range |
 | Grafana hiện `No data` | Chạy gateway/publisher, chạy preprocessing và chọn đúng khoảng thời gian |
 | Build ESP32 lỗi | Kiểm tra PlatformIO và chạy `firmware/build.ps1` ngay trong thư mục firmware |
-

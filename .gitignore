@@ -22,9 +22,11 @@ data/
 tmp/
 *.log
 
+# Báo cáo được nộp riêng, không đưa lên repository mã nguồn
+/docs/
+
 # Editor and operating-system files
 .idea/
 .DS_Store
 Thumbs.db
 ~$*.docx
-
