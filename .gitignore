@@ -1,0 +1,30 @@
+# Secrets and local configuration
+.env
+*.local
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# PlatformIO / Wokwi build output
+firmware/.pio/
+firmware/.vscode/.browse.c_cpp.db*
+firmware/.vscode/c_cpp_properties.json
+firmware/.vscode/launch.json
+firmware/.vscode/ipch/
+
+# Runtime data and logs
+data/
+tmp/
+*.log
+
+# Editor and operating-system files
+.idea/
+.DS_Store
+Thumbs.db
+~$*.docx
+

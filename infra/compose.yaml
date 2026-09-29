@@ -1,0 +1,108 @@
+name: iot-lab2
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.22
+    restart: unless-stopped
+    ports:
+      - "${MQTT_BIND_ADDRESS:-127.0.0.1}:1884:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mosquitto_sub -h 127.0.0.1 -p 1883 -t '__lab2_healthcheck' -C 1 -W 4
+          >/dev/null 2>&1 & subscriber=$$!; sleep 1;
+          mosquitto_pub -h 127.0.0.1 -p 1883 -t '__lab2_healthcheck' -m ok;
+          wait $$subscriber
+      interval: 10s
+      timeout: 6s
+      retries: 5
+      start_period: 5s
+    networks:
+      - iot_lab
+
+  influxdb:
+    image: influxdb:2.7.12
+    restart: unless-stopped
+    ports:
+      - "${INFLUX_BIND_ADDRESS:-127.0.0.1}:8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUX_USERNAME:?Set INFLUX_USERNAME in .env}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:?Set INFLUX_PASSWORD in .env}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG:-iot-lab}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_RAW_BUCKET:-iot_raw}
+      DOCKER_INFLUXDB_INIT_RETENTION: 30d
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN:?Set INFLUX_TOKEN in .env}
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping", "--host", "http://127.0.0.1:8086"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - iot_lab
+
+  influx-init:
+    image: influxdb:2.7.12
+    restart: "no"
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    environment:
+      INFLUX_HOST: http://influxdb:8086
+      INFLUX_ORG: ${INFLUX_ORG:-iot-lab}
+      INFLUX_TOKEN: ${INFLUX_TOKEN:?Set INFLUX_TOKEN in .env}
+      INFLUX_RAW_BUCKET: ${INFLUX_RAW_BUCKET:-iot_raw}
+      INFLUX_PROCESSED_BUCKET: ${INFLUX_PROCESSED_BUCKET:-iot_processed}
+    entrypoint: ["/bin/sh", "/scripts/create-buckets.sh"]
+    volumes:
+      - ./influxdb/create-buckets.sh:/scripts/create-buckets.sh:ro
+    networks:
+      - iot_lab
+
+  grafana:
+    image: grafana/grafana:11.6.5
+    restart: unless-stopped
+    depends_on:
+      influx-init:
+        condition: service_completed_successfully
+    ports:
+      - "${GRAFANA_BIND_ADDRESS:-127.0.0.1}:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      INFLUX_ORG: ${INFLUX_ORG:-iot-lab}
+      INFLUX_TOKEN: ${INFLUX_TOKEN:?Set INFLUX_TOKEN in .env}
+      INFLUX_RAW_BUCKET: ${INFLUX_RAW_BUCKET:-iot_raw}
+      INFLUX_PROCESSED_BUCKET: ${INFLUX_PROCESSED_BUCKET:-iot_processed}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - iot_lab
+
+networks:
+  iot_lab:
+    driver: bridge
+
+volumes:
+  mosquitto_data:
+  influxdb_data:
+  influxdb_config:
+  grafana_data:

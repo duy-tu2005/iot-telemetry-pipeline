@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: IoT Lab 2
+    orgId: 1
+    folder: IoT Lab 2
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
